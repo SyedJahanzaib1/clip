@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Storage Vault - Syed Jahanzaib</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #0284c7;
+            --accent-hover: #0369a1;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        /* Lock Screen */
+        #lock-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+        }
+        .lock-card {
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .lock-card h2 { color: #38bdf8; margin-bottom: 8px; font-size: 24px; }
+        .lock-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+        input[type="password"] {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+            outline: none;
+        }
+        input[type="password"]:focus { border-color: var(--accent); }
+        .btn-primary {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .error-msg { color: var(--danger); font-size: 13px; margin-bottom: 12px; display: none; }
+
+        /* Main Vault */
+        #vault-screen { display: none; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+        .header h1 { color: #38bdf8; font-size: 22px; display: flex; align-items: center; gap: 8px; }
+        .btn-logout {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .input-box {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            background: var(--bg);
+            color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
+        }
+        textarea:focus { border-color: var(--accent); }
+        .clip-card {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        .clip-body { flex-grow: 1; }
+        .clip-text {
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #e2e8f0;
+        }
+        .meta { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+        .meta span { color: #38bdf8; font-weight: bold; }
+        .actions { display: flex; gap: 8px; }
+        .btn-copy {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-copy.copied { background: #059669; }
+        .btn-del {
+            background: #475569;
+            color: #f1f5f9;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-del:hover { background: var(--danger); }
+        .loading { text-align: center; color: var(--text-muted); padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Lock Screen -->
+        <div id="lock-screen">
+            <div class="lock-card">
+                <h2>🔒 Central Vault</h2>
+                <p>Enter Master Password to Access Storage</p>
+                <div id="error-msg" class="error-msg">❌ Incorrect Password</div>
+                <input type="password" id="pwd-input" placeholder="••••••••" onkeyup="if(event.key==='Enter') unlockVault()">
+                <button class="btn-primary" onclick="unlockVault()">Unlock Vault</button>
+            </div>
+        </div>
+
+        <!-- Main Vault Screen -->
+        <div id="vault-screen">
+            <div class="header">
+                <h1>🔒 Central Storage Vault</h1>
+                <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+            </div>
+
+            <div class="input-box">
+                <textarea id="clip-input" placeholder="Paste text, URLs, code snippets, or notes here..."></textarea>
+                <button class="btn-primary" onclick="addClip()">💾 Save to Central Storage</button>
+            </div>
+
+            <h3 style="margin-bottom: 12px; color: var(--text-muted);">📋 Vault Items</h3>
+            <div id="clips-list">
+                <div class="loading">Loading vault items...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const REPO = "SyedJahanzaib1/clip";
+        const FILE_PATH = "data.json";
+        const ENC_TOKEN = "FBEVO31FAXlHOAsmYWZRawMAARdbXlxbH0gPVWByV10VTFQ2CXUAQg==";
+        
+        let token = "";
+        let fileSha = "";
+        let clipsData = [];
+
+        function xorDecrypt(encoded, key) {
+            try {
+                const decoded = atob(encoded);
+                let res = "";
+                for (let i = 0; i < decoded.length; i++) {
+                    res += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return res;
+            } catch (e) {
+                return "";
+            }
+        }
+
+        function unlockVault() {
+            const pwd = document.getElementById("pwd-input").value;
+            const decrypted = xorDecrypt(ENC_TOKEN, pwd);
+            
+            if (decrypted.startsWith("ghp_")) {
+                token = decrypted;
+                localStorage.setItem("vault_pwd", pwd);
+                document.getElementById("lock-screen").style.display = "none";
+                document.getElementById("vault-screen").style.display = "block";
+                fetchClips();
+            } else {
+                document.getElementById("error-msg").style.display = "block";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("vault_pwd");
+            location.reload();
+        }
+
+        async function fetchClips() {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    headers: { "Authorization": `token ${token}` }
+                });
+                if (!res.ok) throw new Error("Failed to load");
+                const data = await res.json();
+                fileSha = data.sha;
+                const contentStr = decodeURIComponent(escape(atob(data.content)));
+                clipsData = JSON.parse(contentStr);
+                renderClips();
+            } catch (e) {
+                document.getElementById("clips-list").innerHTML = `<div class="loading" style="color: var(--danger);">Error loading clips: ${e.message}</div>`;
+            }
+        }
+
+        function renderClips() {
+            const listDiv = document.getElementById("clips-list");
+            if (!clipsData || clipsData.length === 0) {
+                listDiv.innerHTML = `<div class="loading">No items in vault yet.</div>`;
+                return;
+            }
+            
+            // Sort newest first
+            const sorted = [...clipsData].reverse();
+            let html = "";
+            sorted.forEach((c) => {
+                const safeText = c.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                html += `
+                <div class="clip-card">
+                    <div class="clip-body">
+                        <div class="clip-text">${safeText}</div>
+                        <div class="meta">Source: <span>${c.device_source || 'Web'}</span> • ${c.created_at}</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-copy" onclick="copyText(\`${encodeURIComponent(c.content)}\`, this)">📋 Copy</button>
+                        <button class="btn-del" onclick="deleteClip(${c.id})">🗑️</button>
+                    </div>
+                </div>
+                `;
+            });
+            listDiv.innerHTML = html;
+        }
+
+        function copyText(encodedText, btn) {
+            const text = decodeURIComponent(encodedText);
+            navigator.clipboard.writeText(text).then(() => {
+                btn.innerText = "✅ Copied!";
+                btn.classList.add("copied");
+                setTimeout(() => {
+                    btn.innerText = "📋 Copy";
+                    btn.classList.remove("copied");
+                }, 2000);
+            });
+        }
+
+        async function addClip() {
+            const input = document.getElementById("clip-input");
+            const content = input.value.trim();
+            if (!content) return;
+
+            const now = new Date();
+            const timeStr = now.toISOString().replace("T", " ").substring(0, 19);
+
+            const newItem = {
+                id: Date.now(),
+                content: content,
+                device_source: "GitHub Pages Vault",
+                created_at: timeStr
+            };
+
+            clipsData.push(newItem);
+            input.value = "";
+            renderClips();
+
+            await saveToGitHub();
+        }
+
+        async function deleteClip(id) {
+            clipsData = clipsData.filter(c => c.id !== id);
+            renderClips();
+            await saveToGitHub();
+        }
+
+        async function saveToGitHub() {
+            try {
+                const jsonStr = JSON.stringify(clipsData, null, 2);
+                const encodedContent = btoa(unescape(encodeURIComponent(jsonStr)));
+                
+                const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `token ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: "Update vault clips via GitHub Pages",
+                        content: encodedContent,
+                        sha: fileSha
+                    })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    fileSha = data.content.sha;
+                }
+            } catch (e) {
+                console.error("Save failed", e);
+            }
+        }
+
+        // Auto-login if session saved
+        window.onload = () => {
+            const savedPwd = localStorage.getItem("vault_pwd");
+            if (savedPwd) {
+                document.getElementById("pwd-input").value = savedPwd;
+                unlockVault();
+            }
+        };
+    </script>
+</body>
+</html>
